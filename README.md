@@ -52,13 +52,8 @@ Client.getClosestStation(lat: Number, lon: Number); // Will return null if no st
 ```
 
 ```js
-// Set the device ID for the package
-Client.setDeviceId(deviceId: Number);
-```
-
-```js
-// Set the station ID for the package
-Client.setStationId(stationId: Number);
+// Set the device ID and station ID for the package
+Client.setCoreSettings(deviceId: Number, stationId: Number);
 ```
 
 

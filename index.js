@@ -26,32 +26,21 @@ class TempestCore {
         this.initalizeConnection();
     }
 
-    /**
-      * @function setStationId
-      * @description Sets the station ID for the client.
-      * 
-      * @param {number} stationId - The ID of the station to set.
-      */ 
-
-    setStationId = function(stationId) {
-        if (loader.settings.stationId === stationId) { return; }
-        loader.settings.stationId = stationId;
-        loader.static.events.emit(`onPropertyChange`, { message: `Station ID set to ${stationId}` });
-    }
 
     /**
-      * @function setDeviceId
-      * @description Sets the device ID for the client.
+      * @function setCoreSettings
+      * @description Sets the device ID and station ID for the Tempest service.
       * 
       * @param {number} deviceId - The ID of the device to set.
+      * @param {number} stationId - The ID of the station to set.
       */
 
-    setDeviceId = function(deviceId) {
-        if (loader.settings.deviceId === deviceId) { return; }
+    setCoreSettings = function(deviceId, stationId) {
+        if (loader.settings.deviceId === deviceId && loader.settings.stationId === stationId) { return; }
         loader.settings.deviceId = deviceId;
-        if (this.websocket && this.websocket.readyState === this.websocket.OPEN) { this.websocket.close(); }
-        loader.static.events.emit(`onPropertyChange`, { message: `Device ID set to ${deviceId}` });
-        this.initalizeConnection().then(() => { return })
+        loader.settings.stationId = stationId;
+        loader.static.events.emit(`onPropertyChange`, { message: `Device ID set to ${deviceId}, Station ID set to ${stationId}` });
+        this.initalizeConnection();
     }
 
     /**
@@ -81,7 +70,7 @@ class TempestCore {
             if (closestStation) {
                 resolve({ id: closestStation.station.id, name: closestStation.station.properties.name, distance: closestStation.distance, stations: closestStation.station.properties.devices });
             } else {
-                resolve(null)
+                resolve(null);
             }
         })
     }
@@ -98,21 +87,14 @@ class TempestCore {
         })
     }
 
-    
-
     /**
       * @function betterForecast
       * @description Fetches the forecast data for the configured station. 
       */
 
-    betterForecast = function() {
+    betterForecast = async function() {
         return new Promise((resolve, reject) => {
             if (!loader.settings.enableForecasts) { resolve(null); return; }
-            if (loader.cache.lastForecast && (Date.now() - loader.cache.lastForecast) < (loader.cache.nextRefresh * 1000) && this.station == loader.settings.stationId) {
-                resolve(null); return;
-            }
-            this.station = loader.settings.stationId;
-            loader.cache.lastForecast = Date.now();
             if (!loader.settings.stationId) { resolve(null); return; }
             let forecastUrl = `${loader.settings.options.forecastUrl}?api_key=${loader.settings.apiKey}&station_id=${loader.settings.stationId}&units_temp=f&units_wind=mph&units_pressure=inhg&units_distance=mi&units_precip=in&units_other=imperial&units_direction=mph`;
             fetch(forecastUrl, {
@@ -120,7 +102,7 @@ class TempestCore {
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', "User-Agent": loader.settings.options.userAgent }
             }).then(response => {
                 if (!response.ok) { resolve(null); throw new Error(`http-error`); }
-                response.json().then(data => { resolve(data); }).catch(err => { resolve(null); })
+                response.json().then(data => { resolve(data); }).catch(err => { resolve(null); });
             })
         })
     }
@@ -130,7 +112,8 @@ class TempestCore {
       * @description Initializes the WebSocket connection...
       */
 
-    initalizeConnection = async function() {
+    initalizeConnection = function() {
+        let stationLat; let stationLon;
         if (!loader.settings.apiKey || !loader.settings.deviceId || !loader.settings.options.websocketUrl ) { throw new Error("missing-api-or-device-id"); }
         let websocketUrl = `${loader.settings.options.websocketUrl}?api_key=${loader.settings.apiKey}&location_id=${loader.settings.deviceId}&ver=tempest-20250728`;
         this.websocket = new loader.packages.ws(websocketUrl);
@@ -138,23 +121,23 @@ class TempestCore {
             loader.static.events.emit(`onConnect`, { message: `Connected to ${loader.settings.websocketUrl}`});
             if (loader.settings.stationId) {
                 let station = await this.getStationProperties(loader.settings.stationId);
-                let stationLat = station.stations[0].latitude;
-                let stationLon = station.stations[0].longitude;
-                this.websocket.send(JSON.stringify({"type": "geo_strike_listen_start", "lat_min": stationLat - 5,"lat_max": stationLat + 5,"lon_min": stationLon - 5,"lon_max": stationLon + 5,}));
+                stationLat = station.stations[0].latitude;
+                stationLon = station.stations[0].longitude;
             }
-            this.websocket.send(JSON.stringify({"type": "listen_start", "device_id": loader.settings.deviceId}));
-            this.websocket.send(JSON.stringify({"type": "listen_rapid_start", "device_id": loader.settings.deviceId}));
-            loader.packages.mEvent.onForecast(await this.betterForecast());
-            return
+            if (this.websocket) {
+                if (stationLat && stationLon) { this.websocket.send(JSON.stringify({"type": "geo_strike_listen_start", "lat_min": stationLat - 5,"lat_max": stationLat + 5,"lon_min": stationLon - 5,"lon_max": stationLon + 5,})); }
+                this.websocket.send(JSON.stringify({"type": "listen_start", "device_id": loader.settings.deviceId}));
+                this.websocket.send(JSON.stringify({"type": "listen_rapid_start", "device_id": loader.settings.deviceId}));
+                await this.betterForecast()
+            }
         });
         this.websocket.on('message', async (data) => {
             data = JSON.parse(data);
-            if (data.type == `ack`) { loader.static.events.emit(`onAck`, { type: `Connection Acknowledged`}); }
+            if (data.type == `ack`) { loader.static.events.emit(`onAck`, { type: `Connection Acknowledged`});}
             if (data.type == `obs_st`) { loader.packages.mEvent.onObservation(data); loader.packages.mEvent.onForecast(await this.betterForecast()); }
             if (data.type == `rapid_wind`) { loader.packages.mEvent.onRapidWind(data); }
             if (data.type == `evt_strike`) { loader.packages.mEvent.onLightningStrike(data); }
         });
-        return;
     }
     
     /**
@@ -167,6 +150,7 @@ class TempestCore {
 
     onEvent = function(event, listener) {
         loader.static.events.on(event, listener);
+        return () => { loader.static.events.off(event, listener); };
     }
 }
 

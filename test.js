@@ -8,8 +8,7 @@ let Client = new AtmosXTempestPulling({
 });
 
 Client.getClosestStation(43.118858, -95.602).then((station) => {
-    Client.setStationId(station.id);
-    Client.setDeviceId(station.stations[0]);
+    Client.setCoreSettings(station.stations[0], station.id);
 })  
 Client.onEvent(`onAck`, (msg) => {console.log(msg)});
 Client.onEvent(`onObservation`, (msg) => {console.log(msg)});
