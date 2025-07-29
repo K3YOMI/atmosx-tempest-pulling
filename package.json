@@ -1,6 +1,6 @@
 {
   "name": "atmosx-tempest-pulling",
-  "version": "1.0.01",
+  "version": "1.0.02",
   "description": "AtmosphericX Tempest Weather Station Pulling Service",
   "main": "index.js",
   "scripts": {

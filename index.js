@@ -16,7 +16,7 @@ let loader = require(`./bootstrap.js`);
 class TempestCore { 
     constructor(metadata={}) {
         this.packages = loader.packages;
-        this.station = []
+        this.station = 0
         loader.settings = { ...loader.settings, ...metadata };
         process.on('uncaughtException', (error) => {
             const hault = loader.definitions.haultingConditions.find(e => error.message.includes(e.error));
@@ -51,7 +51,7 @@ class TempestCore {
         loader.settings.deviceId = deviceId;
         if (this.websocket && this.websocket.readyState === this.websocket.OPEN) { this.websocket.close(); }
         loader.static.events.emit(`onPropertyChange`, { message: `Device ID set to ${deviceId}` });
-        this.initalizeConnection();
+        this.initalizeConnection().then(() => { return })
     }
 
     /**
@@ -108,9 +108,10 @@ class TempestCore {
     betterForecast = function() {
         return new Promise((resolve, reject) => {
             if (!loader.settings.enableForecasts) { resolve(null); return; }
-            if (loader.cache.lastForecast && (Date.now() - loader.cache.lastForecast) < (loader.cache.nextRefresh * 1000)) {
+            if (loader.cache.lastForecast && (Date.now() - loader.cache.lastForecast) < (loader.cache.nextRefresh * 1000) && this.station == loader.settings.stationId) {
                 resolve(null); return;
             }
+            this.station = loader.settings.stationId;
             loader.cache.lastForecast = Date.now();
             if (!loader.settings.stationId) { resolve(null); return; }
             let forecastUrl = `${loader.settings.options.forecastUrl}?api_key=${loader.settings.apiKey}&station_id=${loader.settings.stationId}&units_temp=f&units_wind=mph&units_pressure=inhg&units_distance=mi&units_precip=in&units_other=imperial&units_direction=mph`;
@@ -129,7 +130,7 @@ class TempestCore {
       * @description Initializes the WebSocket connection...
       */
 
-    initalizeConnection = function() {
+    initalizeConnection = async function() {
         if (!loader.settings.apiKey || !loader.settings.deviceId || !loader.settings.options.websocketUrl ) { throw new Error("missing-api-or-device-id"); }
         let websocketUrl = `${loader.settings.options.websocketUrl}?api_key=${loader.settings.apiKey}&location_id=${loader.settings.deviceId}&ver=tempest-20250728`;
         this.websocket = new loader.packages.ws(websocketUrl);
@@ -143,6 +144,8 @@ class TempestCore {
             }
             this.websocket.send(JSON.stringify({"type": "listen_start", "device_id": loader.settings.deviceId}));
             this.websocket.send(JSON.stringify({"type": "listen_rapid_start", "device_id": loader.settings.deviceId}));
+            loader.packages.mEvent.onForecast(await this.betterForecast());
+            return
         });
         this.websocket.on('message', async (data) => {
             data = JSON.parse(data);
@@ -151,6 +154,7 @@ class TempestCore {
             if (data.type == `rapid_wind`) { loader.packages.mEvent.onRapidWind(data); }
             if (data.type == `evt_strike`) { loader.packages.mEvent.onLightningStrike(data); }
         });
+        return;
     }
     
     /**
