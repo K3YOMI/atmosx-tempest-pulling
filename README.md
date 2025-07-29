@@ -22,7 +22,7 @@ There are several settings you can configure when intializing this package. Plea
 
 ```js
 let Client = new AtmosXTempestPulling({
-    apiKey: `YOPUR-API-KEY-HERE`, // Your Tempest API key
+    apiKey: `YOUR-API-KEY-HERE`, // Your Tempest API key
     deviceId: 0, // Your Tempest device ID
     stationId: 0, // Your Tempest station ID (optional)
     enableForecasts: true, // Enable forecasts (Area)
