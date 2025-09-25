@@ -37,7 +37,7 @@ You can handle various events emitted by the package. Here are some examples:
 ```js
 Client.onEvent(`onAck`, (event: Object) => {});
 Client.onEvent(`onObservation`, (event: Object) => {});
-Client.onEvent(`onWind`, (event: Object) => {});
+Client.onEvent(`onRapidWind`, (event: Object) => {});
 Client.onEvent(`onForecast`, (event: Object) => {});
 Client.onEvent(`onLightning`, (event: Object) => {});
 Client.onEvent(`onError`, (event: Object) => {});

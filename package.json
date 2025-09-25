@@ -1,10 +1,13 @@
 {
   "name": "atmosx-tempest-pulling",
-  "version": "1.0.03",
+  "version": "1.0.04",
   "description": "AtmosphericX Tempest Weather Station Pulling Service",
-  "main": "index.js",
+  "main": "dist/src/helper.js",
+  "types": "src/helper.d.ts",
   "scripts": {
-    "test": "node test.js"
+    "build": "npx tsc",
+    "build:run": "npx tsc && cd ./test && node ./index.js",
+    "publish": "npm run build && npm publish --access public"
   },
   "repository": {
     "type": "git",
@@ -12,7 +15,8 @@
   },
   "keywords": [
     "Weather Station",
-    "AtmosphericX"
+    "AtmosphericX",
+    "Tempest Weather Station"
   ],
   "author": "K3YOMI, Starflight",
   "license": "MIT",
@@ -21,6 +25,11 @@
   },
   "homepage": "https://github.com/K3YOMI/atmosx-tempest-pulling#readme",
   "dependencies": {
+    "typescript": "^5.9.2",
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "@types/ws": "^8.18.1"
   }
 }

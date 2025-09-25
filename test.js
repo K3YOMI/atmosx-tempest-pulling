@@ -7,12 +7,12 @@ let Client = new AtmosXTempestPulling({
     enableForecasts: true,
 });
 
-Client.getClosestStation(43.118858, -95.602).then((station) => {
+Client.getClosestStation(41.118858, -95.602).then((station) => {
     Client.setCoreSettings(station.stations[0], station.id);
 })  
 Client.onEvent(`onAck`, (msg) => {console.log(msg)});
 Client.onEvent(`onObservation`, (msg) => {console.log(msg)});
-Client.onEvent(`onWind`, (data) => {console.log(data)});
+Client.onEvent(`onRapidWind`, (data) => {console.log(data)});
 Client.onEvent(`onForecast`, (data) => {console.log(data)});
 Client.onEvent(`onLightning`, (data) => {console.log(data)});
 Client.onEvent(`onError`, (err) => {console.log(err)});
