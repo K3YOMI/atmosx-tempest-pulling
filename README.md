@@ -13,7 +13,8 @@ npm install atmosx-tempest-pulling
 
 ## Usage
 ```js
-const AtmosXTempestPulling = require(`atmosx-tempest-pulling`);
+const AtmosXTempestPulling = require(`atmosx-tempest-pulling`); // CJS
+import * as AtmosXTempestPulling from 'atmosx-tempest-pulling'; // ESM
 ```
 
 ## Configuration and Initialization
