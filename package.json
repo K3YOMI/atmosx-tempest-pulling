@@ -1,13 +1,13 @@
 {
   "name": "atmosx-tempest-pulling",
-  "version": "1.0.04",
+  "version": "1.0.05",
   "description": "AtmosphericX Tempest Weather Station Pulling Service",
-  "main": "dist/src/helper.js",
+  "main": "dist/helper.js",
   "types": "src/helper.d.ts",
   "scripts": {
-    "build": "npx tsc",
-    "build:run": "npx tsc && cd ./test && node ./index.js",
-    "publish": "npm run build && npm publish --access public"
+    "build:npx": "npx tsc && cd ./test && node ./index.js",
+    "build:tsup": "tsup && cd ./test && node ./index.js",
+    "publish": "npm publish --access public"
   },
   "repository": {
     "type": "git",
@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
-    "@types/ws": "^8.18.1"
+    "@types/ws": "^8.18.1",
+    "tsup": "^8.5.0"
   }
 }

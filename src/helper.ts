@@ -193,4 +193,4 @@ export class AtmosXTempestPulling {
     }
 }
 
-module.exports = AtmosXTempestPulling;
+export default AtmosXTempestPulling;

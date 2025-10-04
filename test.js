@@ -1,4 +1,4 @@
-AtmosXTempestPulling = require(`../index.js`);
+const {AtmosXTempestPulling} = require(`../index.js`);
 
 let Client = new AtmosXTempestPulling({
     apiKey: `API-KEY-HERE`,
